@@ -1,0 +1,74 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django-specific
+*.log
+*.pot
+*.pyc
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# If using PostgreSQL/MySQL and local dev dumps
+*.sql
+
+# Environment variables
+.env
+.env.*
+
+# Media / uploaded files
+/media/
+/staticfiles/
+/static_root/
+/media_root/
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Virtualenv
+venv/
+env/
+ENV/
+.venv/
+.pip-selfcheck.json
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# Pytest
+.pytest_cache/
+
+# Migrations (if you want to exclude auto-generated ones)
+# But usually keep them tracked
+# **/migrations/
+# !**/migrations/__init__.py
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+
+# Pycharm
+.idea/
+
+# Build
+build/
+dist/
+*.egg-info/
+.eggs/

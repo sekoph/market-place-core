@@ -1,0 +1,10 @@
+# .dockerignore
+venv/               # Python virtual environment
+.env              # Local environment variables
+*.pyc               # Compiled Python files
+__pycache__/        # Python cache
+*.sqlite3           # Local SQLite DB
+.DS_Store           # macOS metadata
+.git/               # Git internals
+.gitignore
+README.md           # Exclude if not needed in container
