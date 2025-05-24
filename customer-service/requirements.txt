@@ -14,7 +14,9 @@ coverage==7.8.2
 cryptography==45.0.2
 Django==5.2.1
 django-cors-headers==4.7.0
+django-filter==25.1
 djangorestframework==3.16.0
+dotenv==0.9.9
 drf-spectacular==0.28.0
 idna==3.10
 inflection==0.5.1
@@ -27,6 +29,7 @@ prompt_toolkit==3.0.51
 psycopg2-binary==2.9.10
 pycparser==2.22
 python-dateutil==2.9.0.post0
+python-dotenv==1.1.0
 PyYAML==6.0.2
 referencing==0.36.2
 requests==2.32.3
