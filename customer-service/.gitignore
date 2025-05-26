@@ -55,11 +55,6 @@ coverage.xml
 # Pytest
 .pytest_cache/
 
-# Migrations (if you want to exclude auto-generated ones)
-# But usually keep them tracked
-# **/migrations/
-# !**/migrations/__init__.py
-
 # MyPy
 .mypy_cache/
 .dmypy.json

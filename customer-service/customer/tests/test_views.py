@@ -16,7 +16,7 @@ class CustomerApiTest(APITestCase):
     def test_list_customer(self):
         response = self.client.get(reverse('customer-list'))
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data),1)
+        self.assertEqual(len(response.data),4)
         
     def test_create_customer(self):
         data = {

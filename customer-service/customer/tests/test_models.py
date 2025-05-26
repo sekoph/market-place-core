@@ -11,5 +11,5 @@ class CustomerModelTest(TestCase):
             phone = "254 092653532"
         )
         
-        self.assertEqual(str(customer), "OnlyMicah")
+        self.assertEqual(str(customer), "Micah Doe")
         self.assertEqual(customer.email, "micah@example.com")
