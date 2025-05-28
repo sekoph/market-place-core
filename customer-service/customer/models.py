@@ -2,10 +2,11 @@ from django.db import models
 from shared.base.models import BaseModel
 
 class Customer(BaseModel):
-    first_name = models.CharField(max_length=50)
-    last_name = models.CharField(max_length=50)
-    username = models.CharField(max_length=50, unique=True)
-    email = models.EmailField(unique=True)
+    keycloak_user_id = models.IntegerField(null=False)
+    # first_name = models.CharField(max_length=50)
+    # last_name = models.CharField(max_length=50)
+    # username = models.CharField(max_length=50, unique=True)
+    # email = models.EmailField(unique=True)
     phone = models.CharField(max_length=20)
     
     class Meta:
