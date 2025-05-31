@@ -1,0 +1,267 @@
+
+services:
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "${RABBITMQ_PORT}:5672"         # AMQP protocol port
+      - "${RABBITMQ_MANAGEMENT_PORT}:15672" # Management dashboard
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - app-network
+
+      
+  auth:
+    build:
+      context: .
+      dockerfile: auth-service/Dockerfile
+    ports:
+      - "${AUTH_PORT}:8000"
+    volumes:
+      - .:/app
+    working_dir: /app/auth-service
+    depends_on:
+      - auth_db
+    container_name: auth-service
+    networks:
+      - app-network
+
+  auth_db:
+    image: postgres:latest
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${AUTH_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - auth_data:/var/lib/postgresql/data
+    container_name: auth_db
+    networks:
+      - app-network
+
+  customer:
+    build:
+      context: .
+      dockerfile: customer-service/Dockerfile
+    ports:
+      - "${CUSTOMER_PORT}:8001"
+    environment:
+      - KEYCLOAK_URL=http://keycloak:8080/
+    volumes:
+      - .:/app
+    working_dir: /app/customer-service
+    depends_on:
+      - customer_db
+    container_name: customer-service
+    networks:
+      - app-network
+
+  customer_db:
+    image: postgres:latest
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${CUSTOMER_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - customer_data:/var/lib/postgresql/data
+    container_name: customer_db
+    networks:
+      - app-network
+
+  order:
+    build:
+      context: .
+      dockerfile: order-service/Dockerfile
+    ports:
+      - "${ORDER_PORT}:8002"
+    restart: unless-stopped
+    environment:
+      - KEYCLOAK_URL=http://keycloak:8080/
+      - RABBITMQ_HOST=rabbitmq
+    volumes:
+      - .:/app
+    working_dir: /app/order-service
+    depends_on:
+      - order_db
+      - rabbitmq
+    container_name: order-service
+    networks:
+      - app-network
+
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app-network
+
+   # Celery Worker for Order Service
+  order-celery-worker:
+    build:
+      context: .
+      dockerfile: order-service/Dockerfile
+    working_dir: /app/order-service
+    command: ["celery", "-A", "order_service", "worker", "--loglevel=info"]
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+      - CELERY_BROKER_URL=pyamqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672//
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - .:/app
+      - ./shared:/app/shared
+    depends_on:
+      - redis
+      - rabbitmq
+      - order_db
+    restart: unless-stopped
+    container_name: order-celery-worker
+    networks:
+      - app-network
+
+  # Event Consumer for Order Service
+  order-event-consumer:
+    build:
+      context: .
+      dockerfile: order-service/Dockerfile
+    working_dir: /app/order-service
+    command: ["python", "manage.py", "start_consumer"]
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+      - CELERY_BROKER_URL=pyamqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672//
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - DJANGO_SETTINGS_MODULE=order_service.settings
+    volumes:
+      - .:/app
+      - ./shared:/app/shared
+    depends_on:
+      - redis
+      - rabbitmq
+      - order_db
+      - order-celery-worker
+    restart: unless-stopped
+    container_name: order-event-consumer
+    networks:
+      - app-network
+
+  order_db:
+    image: postgres:latest
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${ORDER_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - order_data:/var/lib/postgresql/data
+    container_name: order_db
+    networks:
+      - app-network
+
+  product:
+    build:
+      context: .
+      dockerfile: product-service/Dockerfile
+    ports:
+      - "${PRODUCT_PORT}:8003"
+    volumes:
+      - .:/app
+    working_dir: /app/product-service
+    depends_on:
+      - product_db
+    container_name: product-service
+    networks:
+      - app-network
+  
+  product-rpc-server:
+    build:
+      context: .
+      dockerfile: product-service/Dockerfile
+    working_dir: /app/product-service
+    command: ["python", "product/services/product_availability_consumer.py"]
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_DEFAULT_USER=myuser
+      - RABBITMQ_DEFAULT_PASS=mypassword
+      - DJANGO_SETTINGS_MODULE=product_service.settings
+    depends_on:
+      - rabbitmq
+      - product
+    restart: unless-stopped
+    container_name: product-rpc-server
+    networks:
+      - app-network
+
+  product_db:
+    image: postgres:latest
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${PRODUCT_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - product_data:/var/lib/postgresql/data
+    container_name: product_db
+    networks:
+      - app-network
+
+  postgres:
+    image: postgres:13
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${KEYCLOAK_DB}
+      POSTGRES_USER: ${KEYCLOAK_USER}
+      POSTGRES_PASSWORD: ${KEYCLOAK_PASS}
+    ports:
+      - "5436:5432"
+    container_name: keycloak_postgres
+    networks:
+      - app-network
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.1
+    container_name: keycloak
+    command: start-dev
+    ports:
+      - "${KEYCLOAK_PORT}:8080"
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres/${KEYCLOAK_DB}
+      KC_DB_USERNAME: ${KEYCLOAK_USER}
+      KC_DB_PASSWORD: ${KEYCLOAK_PASS}
+    depends_on:
+      - postgres
+    networks:
+      - app-network
+
+  
+
+networks:
+  app-network:
+    driver: bridge
+
+
+volumes:
+  auth_data:
+  customer_data:
+  order_data:
+  product_data:
+  keycloak_data:
+  postgres_data:
+  rabbitmq_data:
+  redis_data:
