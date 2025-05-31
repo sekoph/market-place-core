@@ -1,5 +1,6 @@
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.permissions import IsAuthenticated
+from .permission import IsAuthenticated, IsAdmin, IsUser
+
 
 """     Base ViewSet with:
     1. Standardized UUID lookup
@@ -8,7 +9,8 @@ from rest_framework.permissions import IsAuthenticated
 class BaseViewSet(ModelViewSet):
     
     lookup_field = 'id'
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
+
     
     def get_queryset(self):
         # Exclude softdeleted items
