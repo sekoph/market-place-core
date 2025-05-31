@@ -31,4 +31,4 @@ COPY product-service/ /app/product-service/
 
 # Run your application
 # CMD python manage.py runserver 0.0.0.0:8001
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8001"]
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8003"]
