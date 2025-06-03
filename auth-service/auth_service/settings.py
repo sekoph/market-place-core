@@ -183,4 +183,4 @@ REST_FRAMEWORK = {
 #  RabbitMQ settings
 CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL')
 
-SERVICE_NAME = os.getenv('SERVICE_NAME', 'auth-service')
+SERVICE_NAME ='auth-service'

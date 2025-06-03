@@ -49,7 +49,7 @@ def format_phone_number(phone):
         phone = '+254' + phone
     
     # Validate final format
-    if not re.match(r'^254[17]\d{8}$', phone):
+    if not re.match(r'^\+254[17]\d{8}$', phone):
         logger.error(f"Invalid phone number format after processing: {phone}")
         return None
         
@@ -109,8 +109,7 @@ def handle_order_completed(data):
         
         formatted_phone = format_phone_number(customer_phone)
 
-        
-        message = f"Hello {customer_username}, your order #{order_number} has been sucessfully place. Thank you for shopping with us"
+        message = f"Hello {customer_username}, your order #{order_number} has been sucessfully placed. Thank you for shopping with us"
         
         response = sms.send(message, [formatted_phone])
         logger.info(f"sms sent to {formatted_phone}: {response}")
@@ -119,8 +118,19 @@ def handle_order_completed(data):
         try:
             email_success = send_admin_email(data)
             logger.info(f"Admin email sent: {email_success}")
+            return {'email status': 'success'}
         except Exception as e:
             logger.error(f"Failed to send admin email: {e}")
-        
+            
+
+        return {'sms status': 'success'}
     except Exception as e:
         logger.error(f"Failed to send SMS: {e}")
+        # Try to still send the email even if SMS fails
+        try:
+            email_success = send_admin_email(data)
+            logger.info(f"Admin email sent after SMS failure: {email_success}")
+            return {'email status': 'success'}
+        except Exception as e:
+            logger.error(f"Failed to send admin email after SMS failure: {e}")
+            return {'email status': 'failure'}

@@ -1,0 +1,1299 @@
+---
+# namespace.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: microservices
+
+---
+# configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: microservices
+data:
+  # Database configurations
+  DB_HOST_AUTH: "auth-db-service"
+  DB_HOST_CUSTOMER: "customer-db-service"
+  DB_HOST_ORDER: "order-db-service"
+  DB_HOST_PRODUCT: "product-db-service"
+  DB_PORT: "5432"
+  
+  # Keycloak configurations
+  KEYCLOAK_SERVER_URL: "http://keycloak-service:8080"
+  KEYCLOAK_URL: "http://keycloak-service:8080/"
+  KEYCLOAK_REALM: "master"
+  KEYCLOAK_CLIENT_ID: "django-app"
+  KEYCLOAK_ADMIN_USERNAME: "admin"
+  
+  # RabbitMQ configurations
+  RABBITMQ_HOST: "rabbitmq-service"
+  RABBITMQ_PORT: "5672"
+  RABBITMQ_MANAGEMENT_PORT: "15672"
+  RABBITMQ_URL: "amqp://myuser:mypassword@rabbitmq-service:5672//"
+  
+  # Celery configurations
+  CELERY_BROKER_URL: "amqp://myuser:mypassword@rabbitmq-service:5672/%2F"
+  CELERY_RESULT_BACKEND: "redis://redis-service:6379/0"
+  
+  # Django configurations
+  DJANGO_SETTINGS_MODULE: "order_service.settings"
+  
+  # Service configurations
+  SERVICE_NAME_AUTH: "auth-service"
+  SERVICE_NAME_ORDER: "order-service"
+  
+  # Port configurations
+  AUTH_PORT: "8000"
+  CUSTOMER_PORT: "8001"
+  ORDER_PORT: "8002"
+  PRODUCT_PORT: "8003"
+  KEYCLOAK_PORT: "8080"
+  
+  # Email configurations
+  EMAIL_HOST_USER: "admin@gmail.com"
+  ADMIN_EMAIL: "admin@gmail.com"
+
+---
+# secrets.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secrets
+  namespace: microservices
+type: Opaque
+data:
+  # Database credentials (Base64 encoded)
+  DB_USER: YWRtaW4= # admin
+  DB_PASSWORD: cGFzc3dvcmQ= # password
+  POSTGRES_USER: YWRtaW4= # admin
+  POSTGRES_PASSWORD: cGFzc3dvcmQ= # password
+  
+  # Database names
+  DB_NAME_AUTH: YXV0aA== # auth
+  DB_NAME_CUSTOMER: Y3VzdG9tZXI= # customer
+  DB_NAME_ORDER: b3JkZXI= # order
+  DB_NAME_PRODUCT: cHJvZHVjdA== # product
+  AUTH_DB: YXV0aA== # auth
+  CUSTOMER_DB: Y3VzdG9tZXI= # customer
+  ORDER_DB: b3JkZXI= # order
+  PRODUCT_DB: cHJvZHVjdA== # product
+  KEYCLOAK_DB: a2V5Y2xvYWs= # keycloak
+  
+  # Keycloak credentials
+  KEYCLOAK_CLIENT_SECRET: cFZaS2tCUnB0MENmMGFnYkM0WFduc0VybWJ6enRrcHI= # pVZKkBRpt0Cf0agbC4XWnsErmbzztkpr
+  KEYCLOAK_ADMIN_PASSWORD: YWRtaW4= # admin
+  KEYCLOAK_USER: a2V5Y2xvYWs= # keycloak
+  KEYCLOAK_PASS: cGFzc3dvcmQ= # password
+  
+  # RabbitMQ credentials
+  RABBITMQ_DEFAULT_USER: bXl1c2Vy # myuser
+  RABBITMQ_DEFAULT_PASS: bXlwYXNzd29yZA== # mypassword
+  
+  # Email credentials
+  EMAIL_HOST_PASSWORD: YWRtaW4= # admin
+  
+  # Django Secret Key
+  SECRET_KEY: ZGphbmdvLWluc2VjdXJlLXZvamMzMCs4OCVrIWI3bHolKiQrb3ckdXFxKHpseFtyKiFwb3dhXjItbz0jNDlveD11 # django-insecure-vojc30+88%k!b7lz%*$+ow$uqq(zlx^r*!powa^2-o=#49ox=u
+  
+  # Sandbox credentials
+  SANDBOX_USERNAME: c2FuZGJveA== # sandbox
+  SANDBOX_API_KEY: YXRza182MDgzMTcwYjM1Mjg3OGVhZmVjODM1NmIxODczMGU4YThiNzYzYzc3M2I0Y2NhNDUxMzgxMDJiOTIwODhiODE1NDRhN2U4Zg== # atsk_6083170b352878eafec8356b18730e8a8cb763c773b4cca45138102b92088b81544a7e8f
+
+---
+# PostgreSQL for Auth Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-db
+  namespace: microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-db
+  template:
+    metadata:
+      labels:
+        app: auth-db
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:latest  # Use specific version instead of latest
+        imagePullPolicy: IfNotPresent  # Add image pull policy
+        env:
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: AUTH_DB
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: DB_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: DB_PASSWORD
+        ports:
+        - containerPort: 5432
+        volumeMounts:
+        - name: auth-db-storage
+          mountPath: /var/lib/postgresql/data
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+      volumes:
+      - name: auth-db-storage
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-db-service
+  namespace: microservices
+spec:
+  selector:
+    app: auth-db
+  ports:
+  - port: 5432
+    targetPort: 5432
+
+---
+# Customer DB
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: customer-db
+  namespace: microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: customer-db
+  template:
+    metadata:
+      labels:
+        app: customer-db
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: CUSTOMER_DB
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: DB_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: DB_PASSWORD
+        ports:
+        - containerPort: 5432
+        volumeMounts:
+        - name: customer-db-storage
+          mountPath: /var/lib/postgresql/data
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+      volumes:
+      - name: customer-db-storage
+        emptyDir: {}
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: customer-db-service
+  namespace: microservices
+spec:
+  selector:
+    app: customer-db
+  ports:
+  - port: 5432
+    targetPort: 5432
+
+---
+# Order DB
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-db
+  namespace: microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order-db
+  template:
+    metadata:
+      labels:
+        app: order-db
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: ORDER_DB
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: DB_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: DB_PASSWORD
+        ports:
+        - containerPort: 5432
+        volumeMounts:
+        - name: order-db-storage
+          mountPath: /var/lib/postgresql/data
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+      volumes:
+      - name: order-db-storage
+        emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-db-service
+  namespace: microservices
+spec:
+  selector:
+    app: order-db
+  ports:
+  - port: 5432
+    targetPort: 5432
+
+---
+# Product DB
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product-db
+  namespace: microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: product-db
+  template:
+    metadata:
+      labels:
+        app: product-db
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: PRODUCT_DB
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: DB_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: DB_PASSWORD
+        ports:
+        - containerPort: 5432
+        volumeMounts:
+        - name: product-db-storage
+          mountPath: /var/lib/postgresql/data
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+      volumes:
+      - name: product-db-storage
+        emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: product-db-service
+  namespace: microservices
+spec:
+  selector:
+    app: product-db
+  ports:
+  - port: 5432
+    targetPort: 5432
+
+
+
+---
+# Keycloak PostgreSQL
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak-postgres
+  namespace: microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak-postgres
+  template:
+    metadata:
+      labels:
+        app: keycloak-postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:latest
+        env:
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: KEYCLOAK_DB
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: KEYCLOAK_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: KEYCLOAK_PASS
+        ports:
+        - containerPort: 5432
+        volumeMounts:
+        - name: keycloak-postgres-storage
+          mountPath: /var/lib/postgresql/data
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+      volumes:
+      - name: keycloak-postgres-storage
+        emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak-postgres-service
+  namespace: microservices
+spec:
+  selector:
+    app: keycloak-postgres
+  ports:
+  - port: 5432
+    targetPort: 5432
+
+---
+# RabbitMQ
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+  namespace: microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      containers:
+      - name: rabbitmq
+        image: rabbitmq:3-management
+        env:
+        - name: RABBITMQ_DEFAULT_USER
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: RABBITMQ_DEFAULT_USER
+        - name: RABBITMQ_DEFAULT_PASS
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: RABBITMQ_DEFAULT_PASS
+        ports:
+        - containerPort: 5672
+        - containerPort: 15672
+        volumeMounts:
+        - name: rabbitmq-storage
+          mountPath: /var/lib/rabbitmq
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+      volumes:
+      - name: rabbitmq-storage
+        emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq-service
+  namespace: microservices
+spec:
+  selector:
+    app: rabbitmq
+  ports:
+  - name: amqp
+    port: 5672
+    targetPort: 5672
+  - name: management
+    port: 15672
+    targetPort: 15672
+
+---
+# Redis
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        ports:
+        - containerPort: 6379
+        volumeMounts:
+        - name: redis-storage
+          mountPath: /data
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+      volumes:
+      - name: redis-storage
+        emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: microservices
+spec:
+  selector:
+    app: redis
+  ports:
+  - port: 6379
+    targetPort: 6379
+
+---
+# Keycloak
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+  namespace: microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      initContainers:
+      - name: wait-for-db
+        image: postgres:latest
+        command: ['sh', '-c',
+          'until pg_isready -h keycloak-postgres-service -p 5432 -U $(KEYCLOAK_USER) -d $(KEYCLOAK_DB); do 
+            echo "Waiting for database to be ready...";
+            sleep 5;
+          done']
+        env:
+        - name: KEYCLOAK_USER
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: KEYCLOAK_USER
+        - name: KEYCLOAK_DB
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: KEYCLOAK_DB
+      containers:
+      - name: keycloak
+        image: quay.io/keycloak/keycloak:23.0
+        imagePullPolicy: IfNotPresent
+        args:
+        - start-dev
+        env:
+        - name: KEYCLOAK_ADMIN
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: KEYCLOAK_ADMIN_USERNAME
+        - name: KEYCLOAK_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: KEYCLOAK_ADMIN_PASSWORD
+        - name: KC_DB
+          value: "postgres"
+        - name: KC_DB_URL
+          value: "jdbc:postgresql://keycloak-postgres-service:5432/keycloak"
+        - name: KC_DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: KEYCLOAK_USER
+        - name: KC_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: KEYCLOAK_PASS
+        - name: KC_HOSTNAME_STRICT
+          value: "false"
+        - name: KC_HOSTNAME_STRICT_HTTPS
+          value: "false"
+        - name: KC_LOG_LEVEL
+          value: "DEBUG"
+        - name: KC_HEALTH_ENABLED
+          value: "true"
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            memory: "384Mi"
+            cpu: "250m"
+          limits:
+            memory: "768Mi"
+            cpu: "500m"
+        startupProbe:
+          httpGet:
+            path: /realms/master
+            port: 8080
+          failureThreshold: 15
+          periodSeconds: 40
+        readinessProbe:
+          httpGet:
+            path: /realms/master
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /realms/master
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          failureThreshold: 3
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak-service
+  namespace: microservices
+spec:
+  selector:
+    app: keycloak
+  ports:
+  - port: 8080
+    targetPort: 8080
+    nodePort: 30080
+  type: NodePort
+
+---
+# Auth Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      initContainers:
+      - name: wait-for-db
+        image: postgres:latest
+        command: ['sh', '-c', 'until pg_isready -h auth-db-service -p 5432; do echo waiting for database; sleep 2; done;']
+      containers:
+      - name: auth-service
+        image: auth-service:latest # Replace with your actual image
+        env:
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: DB_NAME_AUTH
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: DB_USER
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: DB_PASSWORD
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: DB_HOST_AUTH
+        - name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: DB_PORT
+        - name: DATABASE_URL
+          value: "postgresql://admin:password@auth-db-service:5432/auth"
+        - name: KEYCLOAK_SERVER_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: KEYCLOAK_SERVER_URL
+        - name: KEYCLOAK_REALM
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: KEYCLOAK_REALM
+        - name: KEYCLOAK_CLIENT_ID
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: KEYCLOAK_CLIENT_ID
+        - name: KEYCLOAK_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: KEYCLOAK_CLIENT_SECRET
+        - name: KEYCLOAK_ADMIN_USERNAME
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: KEYCLOAK_ADMIN_USERNAME
+        - name: KEYCLOAK_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: KEYCLOAK_ADMIN_PASSWORD
+        - name: SERVICE_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: SERVICE_NAME_AUTH
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: SECRET_KEY
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health/
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health/
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+  namespace: microservices
+spec:
+  selector:
+    app: auth-service
+  ports:
+  - port: 8000
+    targetPort: 8000
+    nodePort: 30000
+  type: NodePort
+
+---
+# Customer Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: customer-service
+  namespace: microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: customer-service
+  template:
+    metadata:
+      labels:
+        app: customer-service
+    spec:
+      initContainers:
+      - name: wait-for-db
+        image: postgres:latest
+        command: ['sh', '-c', 'until pg_isready -h customer-db-service -p 5432; do echo waiting for database; sleep 2; done;']
+      containers:
+      - name: customer-service
+        image: customer-service:latest # Replace with your actual image
+        env:
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: DB_NAME_CUSTOMER
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: DB_USER
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: DB_PASSWORD
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: DB_HOST_CUSTOMER
+        - name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: DB_PORT
+        - name: DATABASE_URL
+          value: "postgresql://admin:password@customer-db-service:5432/customer"
+        - name: KEYCLOAK_SERVER_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: KEYCLOAK_SERVER_URL
+        - name: KEYCLOAK_REALM
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: KEYCLOAK_REALM
+        - name: KEYCLOAK_CLIENT_ID
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: KEYCLOAK_CLIENT_ID
+        - name: KEYCLOAK_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: KEYCLOAK_CLIENT_SECRET
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: SECRET_KEY
+        ports:
+        - containerPort: 8001
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: customer-service
+  namespace: microservices
+spec:
+  selector:
+    app: customer-service
+  ports:
+  - port: 8001
+    targetPort: 8001
+    nodePort: 30001
+  type: NodePort
+
+---
+# Product Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product-service
+  namespace: microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: product-service
+  template:
+    metadata:
+      labels:
+        app: product-service
+    spec:
+      initContainers:
+      - name: wait-for-db
+        image: postgres:latest
+        command: ['sh', '-c', 'until pg_isready -h product-db-service -p 5432; do echo waiting for database; sleep 2; done;']
+      containers:
+      - name: product-service
+        image: product-service:latest # Replace with your actual image
+        env:
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: DB_NAME_PRODUCT
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: DB_USER
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: DB_PASSWORD
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: DB_HOST_PRODUCT
+        - name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: DB_PORT
+        - name: DATABASE_URL
+          value: "postgresql://admin:password@product-db-service:5432/product"
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: SECRET_KEY
+        - name: SANDBOX_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: SANDBOX_USERNAME
+        - name: SANDBOX_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: SANDBOX_API_KEY
+        ports:
+        - containerPort: 8003
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: product-service
+  namespace: microservices
+spec:
+  selector:
+    app: product-service
+  ports:
+  - port: 8003
+    targetPort: 8003
+    nodePort: 30003
+  type: NodePort
+
+---
+# Product RPC Server
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product-rpc-server
+  namespace: microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: product-rpc-server
+  template:
+    metadata:
+      labels:
+        app: product-rpc-server
+    spec:
+      containers:
+      - name: product-rpc-server
+        image: product-service:latest # Same image as product service
+        command: ["python", "product/services/product_availability_consumer.py"]
+        env:
+        - name: RABBITMQ_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: RABBITMQ_HOST
+        - name: RABBITMQ_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: RABBITMQ_PORT
+        - name: RABBITMQ_DEFAULT_USER
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: RABBITMQ_DEFAULT_USER
+        - name: RABBITMQ_DEFAULT_PASS
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: RABBITMQ_DEFAULT_PASS
+        - name: RABBITMQ_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: RABBITMQ_URL
+        - name: DJANGO_SETTINGS_MODULE
+          value: "product_service.settings"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+
+---
+# Order Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service
+  namespace: microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order-service
+  template:
+    metadata:
+      labels:
+        app: order-service
+    spec:
+      initContainers:
+      - name: wait-for-db
+        image: postgres:latest
+        command: ['sh', '-c', 'until pg_isready -h order-db-service -p 5432; do echo waiting for database; sleep 2; done;']
+      containers:
+      - name: order-service
+        image: order-service:latest # Replace with your actual image
+        env:
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: DB_NAME_ORDER
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: DB_USER
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: DB_PASSWORD
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: DB_HOST_ORDER
+        - name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: DB_PORT
+        - name: DATABASE_URL
+          value: "postgresql://admin:password@order-db-service:5432/order"
+        - name: KEYCLOAK_SERVER_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: KEYCLOAK_SERVER_URL
+        - name: KEYCLOAK_REALM
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: KEYCLOAK_REALM
+        - name: KEYCLOAK_CLIENT_ID
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: KEYCLOAK_CLIENT_ID
+        - name: KEYCLOAK_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: KEYCLOAK_CLIENT_SECRET
+        - name: RABBITMQ_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: RABBITMQ_HOST
+        - name: RABBITMQ_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: RABBITMQ_PORT
+        - name: RABBITMQ_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: RABBITMQ_URL
+        - name: CELERY_BROKER_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: CELERY_BROKER_URL
+        - name: CELERY_RESULT_BACKEND
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: CELERY_RESULT_BACKEND
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: ORDER_DB
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: POSTGRES_PASSWORD
+        ports:
+        - containerPort: 8002
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-service
+  namespace: microservices
+spec:
+  selector:
+    app: order-service
+  ports:
+  - port: 8002
+    targetPort: 8002
+    nodePort: 30002
+  type: NodePort
+
+---
+# Order Celery Worker
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-celery-worker
+  namespace: microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order-celery-worker
+  template:
+    metadata:
+      labels:
+        app: order-celery-worker
+    spec:
+      containers:
+      - name: order-celery-worker
+        image: order-service:latest # Same image as order service
+        command: ["celery", "-A", "order_service", "worker", "--loglevel=info"]
+        env:
+        - name: RABBITMQ_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: RABBITMQ_HOST
+        - name: RABBITMQ_DEFAULT_USER
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: RABBITMQ_DEFAULT_USER
+        - name: RABBITMQ_DEFAULT_PASS
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: RABBITMQ_DEFAULT_PASS
+        - name: CELERY_BROKER_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: CELERY_BROKER_URL
+        - name: CELERY_RESULT_BACKEND
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: CELERY_RESULT_BACKEND
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+
+---
+# Order Event Consumer
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-event-consumer
+  namespace: microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order-event-consumer
+  template:
+    metadata:
+      labels:
+        app: order-event-consumer
+    spec:
+      containers:
+      - name: order-event-consumer
+        image: order-service:latest # Same image as order service
+        command: ["python", "manage.py", "start_consumer"]
+        env:
+        - name: RABBITMQ_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: RABBITMQ_HOST
+        - name: RABBITMQ_DEFAULT_USER
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: RABBITMQ_DEFAULT_USER
+        - name: RABBITMQ_DEFAULT_PASS
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: RABBITMQ_DEFAULT_PASS
+        - name: CELERY_BROKER_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: CELERY_BROKER_URL
+        - name: CELERY_RESULT_BACKEND
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: CELERY_RESULT_BACKEND
+        - name: DJANGO_SETTINGS_MODULE
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: DJANGO_SETTINGS_MODULE
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"

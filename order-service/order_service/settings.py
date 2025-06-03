@@ -174,7 +174,7 @@ SPECTACULAR_SETTINGS = {
 }
 
 
-SERVICE_NAME = os.getenv('SERVICE_NAME', 'order-service')
+SERVICE_NAME ='order-service'
 
 
 CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'pyamqp://myuser:mypassword@rabbitmq:5672//')
@@ -203,4 +203,5 @@ DEFAULT_FROM_EMAIL = os.getenv('EMAIL_HOST_USER')
 
 # Admin email
 ADMIN_EMAIL = 'admin@gmail.com'
+
 
