@@ -8,6 +8,10 @@ nodes:
     nodeRegistration:
       kubeletExtraArgs:
         node-labels: "ingress-ready=true"
+        # Reserve less memory for system pods
+        system-reserved: "memory=512Mi"
+        kube-reserved: "memory=512Mi"
+        eviction-hard: "memory.available<200Mi"
   extraPortMappings:
   - containerPort: 80
     hostPort: 80
@@ -30,5 +34,5 @@ nodes:
   - containerPort: 8080
     hostPort: 8080
     protocol: TCP
-
----
+  # Add worker node for better resource distribution
+- role: worker

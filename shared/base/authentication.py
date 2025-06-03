@@ -38,6 +38,7 @@ class KeycloakAuthentication(BaseAuthentication):
             # print(f"[Auth Debug] stripped Token: {token}")
             # Validate token with Keycloak
             token_info = keycloak_auth.validate_token(token)
+
             if not token_info:
                 # print(f"[Keycloak] Token validation failed for token: {token[:30]}...")
                 raise AuthenticationFailed('Invalid token')

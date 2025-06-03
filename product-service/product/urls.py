@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import ProductCategoryViewSet, ProductViewSet
+from .views import ProductCategoryViewSet, ProductViewSet, AveragePriceByCategoryView
 
 
 router = DefaultRouter()
@@ -9,4 +9,5 @@ router.register(r'product_categories', ProductCategoryViewSet, basename='categor
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('categories/<slug:slug>/average-price/', AveragePriceByCategoryView.as_view(), name='average-price-by-category'),
 ]

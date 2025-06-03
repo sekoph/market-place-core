@@ -15,18 +15,12 @@ logger = logging.getLogger(__name__)
 
 class KeycloakAuth:
     def __init__(self):
-        # self.keycloak_openid = KeycloakOpenID(
-        #     server_url=settings.KEYCLOAK_CONFIG['SERVER_URL'],
-        #     client_id=settings.KEYCLOAK_CONFIG['CLIENT_ID'],
-        #     realm_name=settings.KEYCLOAK_CONFIG['REALM'],
-        #     client_secret_key=settings.KEYCLOAK_CONFIG['CLIENT_SECRET']
-        # )
         
         self.keycloak_openid = KeycloakOpenID(
             server_url=os.getenv('KEYCLOAK_SERVER_URL', 'http://keycloak:8080'),
             client_id=os.getenv('KEYCLOAK_CLIENT_ID','django-app'),
             realm_name=os.getenv('KEYCLOAK_REALM', 'master'),
-            client_secret_key=os.getenv('KEYCLOAK_CLIENT_SECRET', 'pVZKkBRpt0Cf0agbC4XWnsErmbzztkpr')
+            client_secret_key=os.getenv('KEYCLOAK_CLIENT_SECRET')
         )
         
         self.keycloak_admin = KeycloakAdmin(
@@ -41,6 +35,7 @@ class KeycloakAuth:
         """Validate JWT token with Keycloak"""
         try:
             token_info = self.keycloak_openid.introspect(token)
+            print(token_info)
             if token_info.get('active'):
                 return token_info
             return None

@@ -8,7 +8,7 @@ from .permission import IsAuthenticated, IsAdmin, IsUser
     3. Default Authentication   """
 class BaseViewSet(ModelViewSet):
     
-    lookup_field = 'id'
+    # lookup_field = 'id'
     permission_classes = [IsAuthenticated]
 
     

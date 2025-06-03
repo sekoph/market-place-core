@@ -1,9 +1,9 @@
 from django.test import TestCase
 from order.models import Order
 from decimal import Decimal
-import uuid
+from django.db import IntegrityError
 from django.core.exceptions import ValidationError
-
+import uuid
 
 class OrderModelTestCase(TestCase):
     def setUp(self):
@@ -39,7 +39,7 @@ class OrderModelTestCase(TestCase):
             data = self.order_data.copy()
             data[field] = None
             
-            with self.assertRaises(Exception):  # Should raise IntegrityError
+            with self.assertRaises(Exception):  
                 Order.objects.create(**data)
 
     def test_decimal_fields(self):
@@ -82,3 +82,14 @@ class OrderModelTestCase(TestCase):
         order.quantity = 10
         order.save()
         self.assertEqual(order.total_amount, self.order_data['product_price'] * 10)
+        
+        
+    def test_create_order_without_customer_id(self):
+        with self.assertRaises(IntegrityError):
+            Order.objects.create(
+                order_number= 'ORD' + ''.join([str(i) for i in range(1, 16)]),
+                customer_phone= '+254708063310',
+                product_id= uuid.uuid4(),
+                product_price= Decimal(19.99),
+                quantity=3
+            )
