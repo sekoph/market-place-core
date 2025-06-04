@@ -54,7 +54,12 @@ mkdir market-place-core
 cd market-place-core
 git clone git@github.com:sekoph/market-place-core.git
 ```
-
+- To run from K8s run the command below and configure keycloak with steps at the bottom 
+- Note endpoint for services once deploy in k8s in terminal
+```sh
+./deploy.sh
+```
+- To Continue with docker-compose
 ⚙️ Environment Configuration
 
 📦 Root .env
@@ -187,7 +192,17 @@ http://localhost:8080/
 http://localhost:8080
 ```
 - Save changes
-- In client dashboard navigate to credentials copy client secret paste to env files KEYCLOAK_CLIENT_SECRET
+- In client dashboard navigate to credentials copy client secret paste to env files as KEYCLOAK_CLIENT_SECRET
+- N/B for K8s
+```sh
+echo -n "your_client_secret" | base64
+
+# copy generated value as it is and run
+kubectl patch secret app-secrets -n microservices --patch='
+data:
+  KEYCLOAK_CLIENT_SECRET: "generated_value"
+'
+```
 - Navigate to Realm roles create role as user and save
 - Navigate to user , Add user
 - turn on Email verified
