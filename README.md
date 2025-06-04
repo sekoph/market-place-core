@@ -208,10 +208,22 @@ python manage.py test
 📡 API Endpoints (Example)
 service                     url
 - auth                        http://localhost:8000/api/auth/loginn
-
+The below endpoints are authenticated.
 - authenticated routes copy access_token from above url
 - customer                    http://localhost:8001/api/customers/
+  
 - order                       http://localhost:8002/api/orders/
+  ```sh
+  curl -X POST http://localhost:8002/api/orders/ \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer YOUR_AUTH_TOKEN" \
+    -d '{
+      "customer_phone": "+254708063310",
+      "quantity": 1,
+      "product_id": "0828ce0f-6935-4800-a80d-c96f95a1fbf6"
+  }'
+
+  ```
 - product                     http://localhost:8003/api/products/
 - product category            http://localhost:8003/api/product_categories/
 - product price avg with category   http://localhost:8003/api/categories/{product-slug}/average-price/
