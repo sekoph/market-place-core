@@ -216,7 +216,8 @@ service                     url
 - product category            http://localhost:8003/api/product_categories/
 - product price avg with category   http://localhost:8003/api/categories/{product-slug}/average-price/
 
-
+## License
+[MIT](LICENSE)
 
 
 
