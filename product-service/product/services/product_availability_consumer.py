@@ -40,6 +40,13 @@ def product_handler(request_data):
         if product.stock_quantity < quantity:
             return {'available': False, 'message': 'Insufficient stock'}
 
+        print("i'm here now")
+        try:
+            product.stock_quantity -= quantity
+            product.save()
+        except Exception as e:
+            print(f"[Save Error] {e}")
+            
         return {'available': True, 'price': str(product.price), 'name': product.name}
 
     except Product.DoesNotExist:

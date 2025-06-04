@@ -9,7 +9,6 @@ class IsAuthenticated(BasePermission):
     Allows access only to authenticated users.
     """
     def has_permission(self, request, view):
-        print("sasa",request.user.is_authenticated)
         return bool(request.user and request.user.is_authenticated)
 
 class HasRole(BasePermission):

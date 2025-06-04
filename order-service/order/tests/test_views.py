@@ -6,7 +6,8 @@ from shared.utils.auth_utils import KeycloakAuth
 from decimal import Decimal
 from order.models import Order
 from order.services import product_checker
-from shared.utils import messaging
+import shared.utils.messaging
+
 
 
 
@@ -70,64 +71,3 @@ class OrderApiTest(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['detail'], 'Product not found')
         self.assertEqual(Order.objects.count(), 0)
-        
-        
-        
-        
-    # @patch.object(KeycloakAuth, 'validate_token', return_value=True)
-    # @patch.object(KeycloakAuth, 'get_user_info', return_value={
-    #     'sub': str(uuid.uuid4()),
-    #     'email': 'test@example.com',
-    #     'preferred_username': 'testuser'
-    # })
-    # @patch('shared.utils.messaging.publish_event')
-    # @patch('order.services.product_checker.check_product_availability', return_value={
-    #     'available': True,
-    #     'price': '19.99',
-    #     'name': 'Test Product'
-    # })
-    # def test_order_creation_publishes_event(self, mock_check_product, mock_publish, mock_get_user_info, mock_validate):
-    #     """Test that order creation publishes an event"""
-    #     test_data = {
-    #         'customer_id': str(uuid.uuid4()),
-    #         'product_id': '0596f867-3d2a-4b81-b430-bd4cc237f196',
-    #         'quantity': 2,
-    #         'customer_phone': '254712345678'
-    #     }
-        
-    #     response = self.client.post(
-    #         reverse('order-list'),
-    #         test_data,
-    #         HTTP_AUTHORIZATION='Bearer mock-valid-token',
-    #     )
-        
-
-    #     print(f"Response status: {response.status_code}")
-    #     print(f"Response data: {response.data}")
-        
-    #     self.assertEqual(response.status_code, 200)
-        
-    #     # Verify event was published
-    #     self.assertTrue(mock_publish.called, "publish_event was not called")
-        
-        
-    #     mock_publish.assert_called_once_with(
-    #         'order.created',
-    #         {
-    #             'username': 'testuser',
-    #             'email': 'test@example.com',
-    #             'product_name': 'Test Product',
-    #             'product_price': '19.99',
-    #             'customer_phone': '254712345678',
-    #             'quantity': 2,
-    #             'order_number': ANY
-    #         }
-    #     )
-        
-    #     # Verify product availability was checked
-    #     mock_check_product.assert_called_once_with(
-    #         product_id='0596f867-3d2a-4b81-b430-bd4cc237f196',
-    #         quantity=2
-    #     )
-
-        

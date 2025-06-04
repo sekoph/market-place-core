@@ -194,14 +194,14 @@ RABBITMQ_PASS = os.environ.get('RABBITMQ_DEFAULT_PASS', 'mypassword')
 
 # Email configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
+EMAIL_HOST = 'sandbox.smtp.mailtrap.io'
+EMAIL_PORT = 2525
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
-DEFAULT_FROM_EMAIL = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_USER = '849ebbd08c8424'
+EMAIL_HOST_PASSWORD = '17e77fb238c0e9'
+DEFAULT_FROM_EMAIL = 'admin@gmail.com'
 
 # Admin email
-ADMIN_EMAIL = 'admin@gmail.com'
+ADMIN_EMAIL = 'sekoreinhardoo1@gmail.com'
 
 
