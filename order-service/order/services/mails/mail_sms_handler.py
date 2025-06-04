@@ -12,8 +12,8 @@ load_dotenv()
 
 
 # Initialize Africa's Talking
-username = os.getenv('SANDBOX_USERNAME')
-api_key = os.getenv('SANDBOX_API_KEY')
+username = os.getenv('SANDBOX_USERNAME', 'sandbox') #to remove
+api_key = os.getenv('SANDBOX_API_KEY','atsk_6083170b352878eafec8356b18730e8a8cb763c773b4cca45138102b92088b81544a7e8f') # to remove
 africastalking.initialize(username,api_key)
 
 sms = africastalking.SMS
