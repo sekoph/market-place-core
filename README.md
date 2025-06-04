@@ -43,12 +43,12 @@ market-core-place/
 ## 🔧 Setup & Configuration
 
 ### 1️⃣ Clone the Repository
-- Create a parent directory for the microservice as online-auction
+- Create a parent directory for the microservice as market-place-core
 
 ```sh
 mkdir market-place-core
 ```
-- navigate to online-auction and clone this repo
+- navigate to market-place-core and clone this repo
 
 ```sh
 cd market-place-core
@@ -208,15 +208,66 @@ python manage.py test
 📡 API Endpoints (Example)
 service                     url
 - auth                        http://localhost:8000/api/auth/loginn
-
+The below endpoints are authenticated.
 - authenticated routes copy access_token from above url
+  
 - customer                    http://localhost:8001/api/customers/
+  ```sh
+  curl -X POST http://localhost:8001/api/customers/ \
+      -H "Content-Type: application/json" \
+      -H "Authorization: Bearer YOUR_AUTH_TOKEN" \
+      -d '{
+      "phone": "+254 708063310"
+  }'
+  ```
+  
 - order                       http://localhost:8002/api/orders/
+    ```sh
+    curl -X POST http://localhost:8002/api/orders/ \
+      -H "Content-Type: application/json" \
+      -H "Authorization: Bearer YOUR_AUTH_TOKEN" \
+      -d '{
+        "customer_phone": "+254708063310",
+        "quantity": 1,
+        "product_id": "0828ce0f-6935-4800-a80d-c96f95a1fbf6"
+    }'
+  
+    ```
 - product                     http://localhost:8003/api/products/
+  ```sh
+    curl -X POST http://localhost:8003/api/products/ \
+      -H "Content-Type: application/json" \
+      -H "Authorization: Bearer YOUR_AUTH_TOKEN" \
+      -d '{
+          "name": "BMW X5",
+          "slug": "bmw-x5",
+          "description": "Luxury and comfort",
+          "category_id": "4a2d2ee3-9b01-458e-9e2c-816acd52afe7",
+          "price": 10000,
+          "stock_quantity": 10,
+          "available": true
+        }'
+    ```
 - product category            http://localhost:8003/api/product_categories/
+    ```sh
+    curl -X POST http://localhost:8003/api/product_categories/ \
+      -H "Content-Type: application/json" \
+      -H "Authorization: Bearer YOUR_AUTH_TOKEN" \
+      -d '{
+      "name": "SUV",
+      "slug": "suv",
+      "description": "porche vehicles",
+      "parent_id": "5ddcd636-fc6e-43ab-a421-b17311cdcb48"
+      }'
+    ```
 - product price avg with category   http://localhost:8003/api/categories/{product-slug}/average-price/
+    ```sh
+    curl -X GET http://localhost:8003/api/categories/{product-slug}/average-price/ \
+    -H "Authorization: Bearer YOUR_AUTH_TOKEN"
+    ```
 
-
+## License
+[MIT](LICENSE)
 
 
 
