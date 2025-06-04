@@ -386,16 +386,23 @@ spec:
     spec:
       containers:
       - name: postgres
-        image: postgres:15-alpine
+        image: postgres:latest
         env:
         - name: POSTGRES_DB
-          value: "keycloak"
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: KEYCLOAK_DB
         - name: POSTGRES_USER
-          value: "keycloak"
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: KEYCLOAK_USER
         - name: POSTGRES_PASSWORD
-          value: "keycloak"
-        - name: PGDATA
-          value: /var/lib/postgresql/data/pgdata
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: KEYCLOAK_PASS
         ports:
         - containerPort: 5432
         volumeMounts:
@@ -403,11 +410,11 @@ spec:
           mountPath: /var/lib/postgresql/data
         resources:
           requests:
-            memory: "64Mi"
-            cpu: "50m"
+            memory: "512Mi"
+            cpu: "250m"
           limits:
-            memory: "128Mi"
-            cpu: "100m"
+            memory: "1Gi"
+            cpu: "500m"
       volumes:
       - name: keycloak-postgres-storage
         emptyDir: {}
@@ -424,8 +431,6 @@ spec:
   ports:
   - port: 5432
     targetPort: 5432
-
-
 
 ---
 # RabbitMQ
@@ -560,69 +565,101 @@ spec:
     spec:
       initContainers:
       - name: wait-for-db
-        image: postgres:15-alpine
-        command: 
-        - /bin/sh
-        - -c
-        - |
-          echo "Waiting for PostgreSQL..."
-          until pg_isready -h keycloak-postgres-service -p 5432; do
-            sleep 2
-          done
-          echo "PostgreSQL is ready!"
-        resources:
-          requests:
-            memory: "32Mi"
-            cpu: "10m"
-          limits:
-            memory: "64Mi"
-            cpu: "50m"
+        image: postgres:latest
+        command: ['sh', '-c',
+          'until pg_isready -h keycloak-postgres-service -p 5432 -U $(KEYCLOAK_USER) -d $(KEYCLOAK_DB); do 
+            echo "Waiting for database to be ready...";
+            sleep 5;
+          done']
+        env:
+        - name: KEYCLOAK_USER
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: KEYCLOAK_USER
+        - name: KEYCLOAK_DB
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: KEYCLOAK_DB
       containers:
       - name: keycloak
-        image: quay.io/keycloak/keycloak:24.0.1
+        image: quay.io/keycloak/keycloak:23.0
+        imagePullPolicy: IfNotPresent
         args:
         - start-dev
-        - --http-enabled=true
-        - --hostname-strict=false
-        - --hostname-strict-https=false
-        - --db=postgres
-        - --db-url=jdbc:postgresql://keycloak-postgres-service:5432/keycloak
-        - --db-username=keycloak
-        - --db-password=keycloak
         env:
         - name: KEYCLOAK_ADMIN
-          value: "admin"
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: KEYCLOAK_ADMIN_USERNAME
         - name: KEYCLOAK_ADMIN_PASSWORD
-          value: "admin"
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: KEYCLOAK_ADMIN_PASSWORD
+        - name: KC_DB
+          value: "postgres"
+        - name: KC_DB_URL
+          value: "jdbc:postgresql://keycloak-postgres-service:5432/keycloak"
+        - name: KC_DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: KEYCLOAK_USER
+        - name: KC_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: KEYCLOAK_PASS
+        - name: KC_HOSTNAME
+          value: "localhost"
+        - name: KC_HOSTNAME_PORT
+          value: "30080"
+        - name: KC_HOSTNAME_STRICT
+          value: "false"
+        - name: KC_HOSTNAME_STRICT_HTTPS
+          value: "false"
+        - name: KC_HOSTNAME_STRICT_BACKCHANNEL
+          value: "false"
+        - name: KC_HTTP_ENABLED
+          value: "true"
+        - name: KC_PROXY
+          value: "edge"
         - name: KC_LOG_LEVEL
-          value: "WARN"
-        - name: JAVA_OPTS
-          value: "-Xms128m -Xmx256m -XX:MetaspaceSize=96m -XX:MaxMetaspaceSize=256m"
+          value: "DEBUG"
+        - name: KC_HEALTH_ENABLED
+          value: "true"
+
         ports:
         - containerPort: 8080
         resources:
           requests:
-            memory: "256Mi"
-            cpu: "100m"
+            memory: "384Mi"
+            cpu: "250m"
           limits:
-            memory: "512Mi"
-            cpu: "300m"
-        # Simplified probes
+            memory: "768Mi"
+            cpu: "500m"
+        startupProbe:
+          httpGet:
+            path: /realms/master
+            port: 8080
+          failureThreshold: 15
+          periodSeconds: 40
         readinessProbe:
           httpGet:
             path: /realms/master
             port: 8080
-          initialDelaySeconds: 45
+          initialDelaySeconds: 30
           periodSeconds: 10
-          timeoutSeconds: 5
-          failureThreshold: 5
+          failureThreshold: 3
         livenessProbe:
           httpGet:
             path: /realms/master
             port: 8080
           initialDelaySeconds: 60
-          periodSeconds: 15
-          timeoutSeconds: 5
+          periodSeconds: 10
           failureThreshold: 3
 
 ---
@@ -639,8 +676,6 @@ spec:
     targetPort: 8080
     nodePort: 30080
   type: NodePort
-
-
 
 ---
 # Auth Service
@@ -666,6 +701,7 @@ spec:
       containers:
       - name: auth-service
         image: auth-service:latest # Replace with your actual image
+        imagePullPolicy: IfNotPresent
         env:
         - name: DB_NAME
           valueFrom:

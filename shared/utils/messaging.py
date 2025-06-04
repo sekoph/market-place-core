@@ -178,8 +178,7 @@ def consume_event(event_types: list, callback: Callable):
     broker = get_broker()
     broker.consume_events(event_types, callback)
 
-# For backward compatibility, if you have code that directly uses broker
-# This will now be lazily initialized
+
 @property
 def broker():
     return get_broker()

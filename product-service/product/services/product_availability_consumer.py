@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# File: product_service/run_rpc_server.py
-
 import os
 import django
 import logging
@@ -10,10 +7,9 @@ sys.path.append('/app')
 sys.path.append('/app/product-service')
 
 # Setup Django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'product_service.settings')  # Adjust this path
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'product_service.settings') 
 django.setup()
 
-# Now import your modules
 from shared.utils.rabbit_mq.rpc_server import RPCServer
 from product.models import Product
 

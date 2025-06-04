@@ -11,11 +11,9 @@ from shared.utils.messaging import publish_event
 from decimal import Decimal, InvalidOperation
 import random
 import string
-# from shared.base.permission import IsAuthenticated, IsAdmin, IsUser
 
 class OrderViewSet(BaseViewSet):
     serializer_class = OrderSerializer
-    # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return Order.objects.filter(customer_id=self.request.user.sub)

@@ -32,7 +32,7 @@ class KeycloakAuthentication(BaseAuthentication):
             return None
         
         try:
-            # Fix: Properly split the Authorization header
+            # Properly split the Authorization header
             token = auth_header.split(' ')[1]
             logger.debug(f"[Auth Debug] Stripped Token: {token}")
             # print(f"[Auth Debug] stripped Token: {token}")

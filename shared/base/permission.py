@@ -25,7 +25,7 @@ class HasRole(BasePermission):
             return False
         
         try:
-            # Fix: Properly split the Authorization header
+            #  Properly split the Authorization header
             token = auth_header.split(' ')[1]
             return keycloak_auth.has_role(token, self.role)
         except Exception as e:
