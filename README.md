@@ -16,10 +16,14 @@ A microservices-based Django project for a marketplace platform, consisting of t
 
 🚀 Getting Started
 ✅ Prerequisites
-Docker & Docker Compose
-Python 3.10+ (if running locally)
-Keycloak (Via docker)
-RabbitMQ (via Docker)
+- Docker & Docker Compose
+- Python 3.10+ (if running locally)
+- Keycloak (Via docker)
+- RabbitMQ (via Docker)
+  ## 🚀 Key Features
+- The message broker sends email to admin and to user sms after ordering successfully
+- implentations of rabbitMQ client and server for interservice communication between order and product service to check availability of product before ordering
+- Authentication with OpenID Connect over keycloak
 
 📁 Project Structure
 ```sh
