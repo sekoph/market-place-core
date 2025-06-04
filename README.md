@@ -156,10 +156,12 @@ docker-compose us
 ```
 
 🔐 Setup Keycloak client
-```sh
-http://localhost:8080
-# use admin for password and username
-```
+  ```sh
+  http://localhost:8080
+  # use admin for password and username
+  # running from K8s
+  http://localhost:9080
+  ```
 - login with admin as username, admin as password
 - select client and create client
 - enter client type as OpenID Connect
@@ -174,6 +176,7 @@ django-app
 ```sh
 # root url
 http://localhost:8080
+# k8s port is 9080 repeat the same for port unless running from docker-compose
 # home url
 http://localhost:8080
 # valid redirect URIs 
