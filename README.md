@@ -2,7 +2,7 @@
 
 A microservices-based Django project for a marketplace platform, consisting of the following services:
 
-- 🔐 **Auth Service** — User management and authentication (via Keycloak)
+- 🔐 **Auth Service** — User management and authentication (OpenId Connect over Keycloak)
 - 👤 **Customer Service** — Customer profile and data management
 - 📦 **Product Service** — Product categories, listings, and pricing
 - 📑 **Order Service** — Order creation, tracking, and processing
