@@ -234,6 +234,21 @@ run_migrations() {
     print_status "Migrations completed ✓"
 }
 
+run_tests(){
+    print_header "Running Tests"
+
+    services=("auth-service" "customer-service" "order-service" "product-service")
+
+    for service in "${services[@]}"; do
+    print_status "Running tests for ${service}..."
+    kubectl exec -n microservices deployment/${service} -- python manage.py test || {
+        print_warning "Tests failed for ${service}"
+    }
+    done
+
+    print_status "migrations completed ✓"
+}
+
 # Show deployment status
 show_status() {
     print_header "Deployment Status"

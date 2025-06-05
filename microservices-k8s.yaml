@@ -39,6 +39,8 @@ data:
   
   # Django configurations
   DJANGO_SETTINGS_MODULE: "order_service.settings"
+  DJANGO_ALLOWED_HOSTS: "*"
+
   
   # Service configurations
   SERVICE_NAME_AUTH: "auth-service"
@@ -566,6 +568,7 @@ spec:
       initContainers:
       - name: wait-for-db
         image: postgres:latest
+        imagePullPolicy: IfNotPresent
         command: ['sh', '-c',
           'until pg_isready -h keycloak-postgres-service -p 5432 -U $(KEYCLOAK_USER) -d $(KEYCLOAK_DB); do 
             echo "Waiting for database to be ready...";
@@ -697,6 +700,7 @@ spec:
       initContainers:
       - name: wait-for-db
         image: postgres:latest
+        imagePullPolicy: IfNotPresent
         command: ['sh', '-c', 'until pg_isready -h auth-db-service -p 5432; do echo waiting for database; sleep 2; done;']
       containers:
       - name: auth-service
@@ -827,10 +831,12 @@ spec:
       initContainers:
       - name: wait-for-db
         image: postgres:latest
+        imagePullPolicy: IfNotPresent
         command: ['sh', '-c', 'until pg_isready -h customer-db-service -p 5432; do echo waiting for database; sleep 2; done;']
       containers:
       - name: customer-service
         image: customer-service:latest # Replace with your actual image
+        imagePullPolicy: IfNotPresent
         env:
         - name: DB_NAME
           valueFrom:
@@ -929,10 +935,12 @@ spec:
       initContainers:
       - name: wait-for-db
         image: postgres:latest
+        imagePullPolicy: IfNotPresent
         command: ['sh', '-c', 'until pg_isready -h product-db-service -p 5432; do echo waiting for database; sleep 2; done;']
       containers:
       - name: product-service
-        image: product-service:latest # Replace with your actual image
+        image: product-service:latest
+        imagePullPolicy: IfNotPresent
         env:
         - name: DB_NAME
           valueFrom:
@@ -961,6 +969,26 @@ spec:
               key: DB_PORT
         - name: DATABASE_URL
           value: "postgresql://admin:password@product-db-service:5432/product"
+        - name: KEYCLOAK_SERVER_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: KEYCLOAK_SERVER_URL
+        - name: KEYCLOAK_REALM
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: KEYCLOAK_REALM
+        - name: KEYCLOAK_CLIENT_ID
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: KEYCLOAK_CLIENT_ID
+        - name: KEYCLOAK_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: KEYCLOAK_CLIENT_SECRET
         - name: SECRET_KEY
           valueFrom:
             secretKeyRef:
@@ -1021,6 +1049,7 @@ spec:
       containers:
       - name: product-rpc-server
         image: product-service:latest # Same image as product service
+        imagePullPolicy: IfNotPresent
         command: ["python", "product/services/product_availability_consumer.py"]
         env:
         - name: RABBITMQ_HOST
@@ -1078,10 +1107,12 @@ spec:
       initContainers:
       - name: wait-for-db
         image: postgres:latest
+        imagePullPolicy: IfNotPresent
         command: ['sh', '-c', 'until pg_isready -h order-db-service -p 5432; do echo waiting for database; sleep 2; done;']
       containers:
       - name: order-service
         image: order-service:latest # Replace with your actual image
+        imagePullPolicy: IfNotPresent
         env:
         - name: DB_NAME
           valueFrom:
@@ -1215,6 +1246,7 @@ spec:
       containers:
       - name: order-celery-worker
         image: order-service:latest # Same image as order service
+        imagePullPolicy: IfNotPresent
         command: ["celery", "-A", "order_service", "worker", "--loglevel=info"]
         env:
         - name: RABBITMQ_HOST
@@ -1270,6 +1302,7 @@ spec:
       containers:
       - name: order-event-consumer
         image: order-service:latest # Same image as order service
+        imagePullPolicy: IfNotPresent
         command: ["python", "manage.py", "start_consumer"]
         env:
         - name: RABBITMQ_HOST
