@@ -18,6 +18,7 @@ A microservices-based Django project for a marketplace platform, consisting of t
 ✅ Prerequisites
 - Docker & Docker Compose
 - Python 3.10+ (if running locally)
+- Kubernetes with Kind
 - Keycloak (Via docker)
 - RabbitMQ (via Docker)
   ## 🚀 Key Features
