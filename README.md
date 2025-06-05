@@ -157,7 +157,7 @@ KEYCLOAK_CLIENT_SECRET=your-client-secret
 ```sh
 # run all services at once
 # at the root folder of the project
-docker-compose us
+docker-compose up
 ```
 
 🔐 Setup Keycloak client
@@ -193,7 +193,7 @@ http://localhost:8080
 ```
 - Save changes
 - In client dashboard navigate to credentials copy client secret paste to env files as KEYCLOAK_CLIENT_SECRET
-- N/B for K8s
+- for K8s follow the commands below to setup the client secret and restart the microservice container at docker
 ```sh
 echo -n "your_client_secret" | base64
 
