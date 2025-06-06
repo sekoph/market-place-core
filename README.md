@@ -223,7 +223,14 @@ stop and rerun ```docker-compose up``` for client secret to take effect
 
 📡 API Endpoints (Example)
 service                     url
-- auth                        http://localhost:8000/api/auth/loginn
+- auth                        http://localhost:8000/api/auth/loginn/
+  ```sh
+    curl -X POST http://localhost:8000/api/auth/loginn/ \
+     -H "Content-Type: application/x-www-form-urlencoded" \
+    -d "username=myuser" \
+    -d "password=mypassword"
+  ```
+
 The below endpoints are authenticated.
 - authenticated routes copy access_token from above url
   
