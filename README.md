@@ -221,7 +221,12 @@ data:
 - Navigate to Realm setting at the bottom of the screen select Tokens increase token lifespan and save changes
 
 stop and rerun ```docker-compose up``` for client secret to take effect
-
+- Run Test 
+  ```sh
+    chmod +x run_test.sh
+    ./run_test.sh
+  ```
+- for the K8s test has been automated.
 📡 API Endpoints (Example)
 service                     url
 - auth                        http://localhost:8000/api/auth/loginn/
