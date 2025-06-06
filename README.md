@@ -161,7 +161,7 @@ KEYCLOAK_CLIENT_SECRET=your-client-secret
 docker-compose up
 ```
 🔁 Database Migrations
-After all services are up and running in the container
+- After all services are up and running in the container
 - In a new terminal
 ```sh
 chmod +x run_migrations.sh
