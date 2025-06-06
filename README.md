@@ -58,6 +58,7 @@ git clone git@github.com:sekoph/market-place-core.git
 - To run from K8s run the command below and configure keycloak with steps at the bottom 
 - Note endpoint for services once deploy in k8s in terminal
 ```sh
+chmod +x deploy.sh
 ./deploy.sh
 ```
 - To Continue with docker-compose
