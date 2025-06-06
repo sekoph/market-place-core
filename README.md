@@ -160,6 +160,13 @@ KEYCLOAK_CLIENT_SECRET=your-client-secret
 # at the root folder of the project
 docker-compose up
 ```
+🔁 Database Migrations
+After all services are up and running in the container
+- In a new terminal
+```sh
+chmod +x run_migrations.sh
+./run_migrations.sh
+```
 
 🔐 Setup Keycloak client
   ```sh
@@ -214,16 +221,6 @@ data:
 
 stop and rerun ```docker-compose up``` for client secret to take effect
 
-🔁 Database Migrations
-- In a new terminal
-- For each service: run
-```sh
-docker-compose exec order sh 
-python manage.py migrate
-# to run tests
-python manage.py test
-# repeat the same for customer,auth and product exactly.
-```
 📡 API Endpoints (Example)
 service                     url
 - auth                        http://localhost:8000/api/auth/loginn
