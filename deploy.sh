@@ -291,6 +291,7 @@ main() {
     deploy_services      # Deploy to cluster fourth
     wait_for_pods        # Wait for pods to be ready
     run_migrations       # Run Django migrations
+    run_tests            # Run Django tests
     show_status          # Show final status
     
     print_header "Deployment Complete!"

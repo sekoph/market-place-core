@@ -47,7 +47,8 @@ COPY  shared/ /app/shared/
 # Copy ONLY necessary files
 COPY order-service/ /app/order-service/
 
-
+# Create a directory for static files
+RUN mkdir -p /app/staticfiles
 
 # Run your application
 # CMD python manage.py runserver 0.0.0.0:8001

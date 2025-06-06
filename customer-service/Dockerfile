@@ -43,6 +43,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY  shared/ /app/shared/
 
+# Create a directory for static files
+RUN mkdir -p /app/staticfiles
+
 # Copy ONLY necessary files
 COPY customer-service/ /app/customer-service/
 

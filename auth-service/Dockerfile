@@ -47,6 +47,8 @@ COPY  shared/ /app/shared/
 # Copy ONLY necessary files
 COPY auth-service/ /app/auth-service/
 
+# Create a directory for static files
+RUN mkdir -p /app/staticfiles
 
 
 # Run your application
