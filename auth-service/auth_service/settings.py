@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
     'rest_framework',
+    'drf_spectacular',
     'corsheaders',
     'accounts',
     'shared'
@@ -178,9 +179,17 @@ REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
     ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 #  RabbitMQ settings
 CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL')
 
 SERVICE_NAME ='auth-service'
+
+# DRF Spectacular settings
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Auth Service API',
+    'DESCRIPTION': 'Authentication and user management with Keycloak',
+    'VERSION': '1.0.0',
+}

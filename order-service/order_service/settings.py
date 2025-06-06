@@ -153,6 +153,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE':10,
     'DEFAULT_FILTER_BACKENDS':['django_filters.rest_framework.DjangoFilterBackend'],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 
@@ -168,8 +169,8 @@ REST_FRAMEWORK = {
 
 # OpenAPI Docs (drf-spectacular)
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'Customer Service API',
-    'DESCRIPTION': 'Manages customer profiles and data',
+    'TITLE': 'Order Service API',
+    'DESCRIPTION': 'Manages orders and order processing',
     'VERSION': '1.0.0',
 }
 

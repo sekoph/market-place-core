@@ -8,6 +8,6 @@ urlpatterns = [
     path('logout/', views.LogoutView.as_view(), name='logout'),
     path('refresh/', views.RefreshTokenView.as_view(), name='refresh_token'),
     path('user-info/', views.UserInfoView.as_view(), name='user_info'),
-    path('register/', views.RegisterView.as_view(), name='user_registration'),
+    # path('register/', views.RegisterView.as_view(), name='user_registration'),
     path('loginn/', views.KeyCloakLoginView.as_view(), name='keycloak-login'),
 ]

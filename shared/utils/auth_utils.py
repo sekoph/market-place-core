@@ -27,7 +27,7 @@ class KeycloakAuth:
             server_url=os.getenv('KEYCLOAK_SERVER_URL','http://keycloak:8080'),
             username=os.getenv('KEYCLOAK_ADMIN_USERNAME','admin'),
             password=os.getenv('KEYCLOAK_ADMIN_PASSWORD','admin'),
-            realm_name=os.getenv('KEYCLOAK_REALM','django-app'),
+            realm_name=os.getenv('KEYCLOAK_REALM','master'),
             verify=True
         )
     

@@ -24,36 +24,37 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 
-class RegisterView(APIView):
-    def post(self, request):
-        username = request.data.get("username")
-        password = request.data.get("password")
-        email = request.data.get("email")
+# class RegisterView(APIView):
+#     permission_classes = [AllowAny]
+#     def post(self, request):
+#         username = request.data.get("username")
+#         password = request.data.get("password")
+#         email = request.data.get("email")
 
-        if not username or not password or not email:
-            return Response({"error": "username, password, and email are required"}, status=400)
+#         if not username or not password or not email:
+#             return Response({"error": "username, password, and email are required"}, status=400)
 
-        try:
-            keycloak_admin = KeycloakAdmin(
-                server_url=os.getenv("KEYCLOAK_SERVER_URL"),
-                username=os.getenv("KEYCLOAK_ADMIN_USER"),
-                password=os.getenv("KEYCLOAK_ADMIN_PASSWORD"),
-                realm_name=os.getenv("KEYCLOAK_REALM"),
-                client_id="admin-cli",
-                verify=True
-            )
+#         try:
+#             keycloak_admin = KeycloakAdmin(
+#                 server_url=os.getenv("KEYCLOAK_SERVER_URL"),
+#                 username=os.getenv("KEYCLOAK_ADMIN_USER"),
+#                 password=os.getenv("KEYCLOAK_ADMIN_PASSWORD"),
+#                 realm_name=os.getenv("KEYCLOAK_REALM"),
+#                 client_id="admin-cli",
+#                 verify=True
+#             )
 
-            # Create user
-            user_id = keycloak_admin.create_user({
-                "email": email,
-                "username": username,
-                "enabled": True,
-                "credentials": [{"value": password, "type": "password",}],
-            })
+#             # Create user
+#             user_id = keycloak_admin.create_user({
+#                 "email": email,
+#                 "username": username,
+#                 "enabled": True,
+#                 "credentials": [{"value": password, "type": "password",}],
+#             })
 
-            return Response({"message": "User created", "user_id": user_id}, status=status.HTTP_201_CREATED)
-        except Exception as e:
-            return Response({"error": str(e)}, status=500)
+#             return Response({"message": "User created", "user_id": user_id}, status=status.HTTP_201_CREATED)
+#         except Exception as e:
+#             return Response({"error": str(e)}, status=500)
 
 class KeyCloakLoginView(APIView):
     def post(self, request):
