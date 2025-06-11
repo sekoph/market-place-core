@@ -13,9 +13,15 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 from dotenv import load_dotenv
 import os
+import sys
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Add shared folder to Python path
+SHARED_DIR = BASE_DIR.parent / 'shared'
+if SHARED_DIR.exists():
+    sys.path.insert(0, str(SHARED_DIR))
 
 load_dotenv()
 
@@ -44,9 +50,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_filters',
     'drf_spectacular',
-    'product',
-    'shared'
-]
+    'product'
+    ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
