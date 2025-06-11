@@ -21,25 +21,25 @@ jobs:
             DB_NAME: auth
             DB_USER: admin
             DB_PASSWORD: password
-            DB_PORT: 5433
+            DB_PORT: 5432
 
           - name: customer-service
             DB_NAME: customer
             DB_USER: admin
             DB_PASSWORD: password
-            DB_PORT: 5434
+            DB_PORT: 5432
 
           - name: product-service
             DB_NAME: product
             DB_USER: admin
             DB_PASSWORD: password
-            DB_PORT: 5435
+            DB_PORT: 5432
 
           - name: order-service
             DB_NAME: order
             DB_USER: admin
             DB_PASSWORD: password
-            DB_PORT: 5436
+            DB_PORT: 5432
 
     services:
       postgres:
@@ -54,7 +54,7 @@ jobs:
         env:
           POSTGRES_USER: admin
           POSTGRES_PASSWORD: password
-          POSTGRES_DB: placeholder_db  # This gets overridden in Django env
+          POSTGRES_DB: postgres # Default database 
 
     steps:
       - name: Checkout code
@@ -64,6 +64,12 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
+
+      - name: Create database for service
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+          PGPASSWORD=${{ matrix.service.DB_PASSWORD }} createdb -h localhost -U ${{ matrix.service.DB_USER }} ${{ matrix.service.DB_NAME }} || echo "Database might already exist"
 
       - name: Install dependencies
         working-directory: ./${{ matrix.service.name }}
@@ -80,6 +86,7 @@ jobs:
           DB_PASSWORD: ${{ matrix.service.DB_PASSWORD }}
           DB_PORT: ${{ matrix.service.DB_PORT }}
           DB_HOST: localhost
+          PYTHONPATH: ${{ github.workspace }}
         run: |
           python manage.py migrate
 
@@ -91,6 +98,7 @@ jobs:
           DB_PASSWORD: ${{ matrix.service.DB_PASSWORD }}
           DB_PORT: ${{ matrix.service.DB_PORT }}
           DB_HOST: localhost
+          PYTHONPATH: ${{ github.workspace }}
         run: |
           coverage run manage.py test
           coverage report
