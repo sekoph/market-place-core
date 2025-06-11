@@ -17,11 +17,6 @@ import sys
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Add shared folder to Python path
-SHARED_DIR = BASE_DIR.parent / 'shared'
-if SHARED_DIR.exists():
-    sys.path.insert(0, str(SHARED_DIR))
-
 load_dotenv()
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -34,6 +29,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+sys.path.append('/app')
 
 
 # Application definition
