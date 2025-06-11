@@ -5,11 +5,17 @@ services:
     image: rabbitmq:3-management
     container_name: rabbitmq
     ports:
-      - "${RABBITMQ_PORT}:5672"         # AMQP protocol port
+      - "${RABBITMQ_PORT}:5672"        # AMQP protocol port
       - "${RABBITMQ_MANAGEMENT_PORT}:15672" # Management dashboard
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     networks:
@@ -118,6 +124,8 @@ services:
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
       - CELERY_BROKER_URL=pyamqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672//
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - DJANGO_SETTINGS_MODULE=order_service.settings
+      - PYTHONPATH=/app:/app/order-service
     volumes:
       - .:/app
       - ./shared:/app/shared
@@ -141,6 +149,7 @@ services:
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+      - RABBITMQ_PORT=${RABBITMQ_PORT}
       - CELERY_BROKER_URL=pyamqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672//
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
       - DJANGO_SETTINGS_MODULE=order_service.settings
@@ -148,15 +157,18 @@ services:
       - .:/app
       - ./shared:/app/shared
     depends_on:
-      - redis
-      - rabbitmq
-      - order_db
-      - order-celery-worker
+      redis:
+        condition: service_started
+      order_db:
+        condition: service_started
+      order-celery-worker:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
     restart: unless-stopped
     container_name: order-event-consumer
     networks:
       - app-network
-
   order_db:
     image: postgres:latest
     restart: unless-stopped
@@ -196,6 +208,7 @@ services:
       - RABBITMQ_DEFAULT_USER=myuser
       - RABBITMQ_DEFAULT_PASS=mypassword
       - DJANGO_SETTINGS_MODULE=product_service.settings
+      - PYTHONPATH=/app:/app/product-service
     depends_on:
       - rabbitmq
       - product

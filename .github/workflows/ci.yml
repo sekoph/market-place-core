@@ -2,9 +2,13 @@ name: Market Place Core CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      # - main
+      - coverage-test-feature
   pull_request:
-    branches: [ "main" ]
+    branches:
+      # - main
+      - coverage-test-feature
 
 jobs:
   build:
