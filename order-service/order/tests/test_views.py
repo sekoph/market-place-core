@@ -1,4 +1,4 @@
-from unittest.mock import patch, ANY
+from unittest.mock import patch, ANY, Mock
 from rest_framework.test import APITestCase
 from django.urls import reverse
 import uuid
@@ -50,8 +50,16 @@ class OrderApiTest(APITestCase):
         'email': 'test@example.com',
         'preferred_username': 'testuser'
     })
-    @patch.object(product_checker, 'check_product_availability', return_value={'available': False, 'message': 'Product is not available'})
-    def test_create_order_with_unavailable_product(self, mock_check_product_availability, mock_validate, mock_get_user_info):
+    # @patch.object(product_checker, 'check_product_availability', return_value={'available': False, 'message': 'Product is not available'})
+    @patch('order.services.product_checker.RPCClient')
+    def test_create_order_with_unavailable_product(self, mock_rpc_client, mock_validate, mock_get_user_info):
+        
+        mock_client_instance = Mock()
+        
+        mock_client_instance.call.return_value = {'available': False, 'message': 'Product is not available'}
+        
+        mock_rpc_client.return_value = mock_client_instance
+        
         test_data = {
             'customer_id': uuid.uuid4(),
             'order_number': 'ORD' + ''.join([str(i) for i in range(1, 16)]),
@@ -69,5 +77,7 @@ class OrderApiTest(APITestCase):
         
         # Verify the response
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['detail'], 'Product not found')
+        self.assertEqual(response.data['detail'], 'Product is not available')
         self.assertEqual(Order.objects.count(), 0)
+        mock_rpc_client.assert_called_once_with(queue_name='product_availability_queue')
+        mock_client_instance.call.assert_called_once()

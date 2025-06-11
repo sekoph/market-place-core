@@ -3,12 +3,22 @@
 import os
 import sys
 
-sys.path.append('/app')
+# sys.path.append('/app')
 
 
 def main():
     """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'auth_service.settings')
+    
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    parent_dir = os.path.dirname(current_dir)
+    shared_dir = os.path.join(parent_dir, 'shared')
+    
+    if parent_dir not in sys.path:
+        sys.path.insert(0, parent_dir)
+    if shared_dir not in sys.path:
+        sys.path.insert(0, shared_dir)
+    
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

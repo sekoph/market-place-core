@@ -20,9 +20,6 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Add shared folder to Python path
-SHARED_DIR = BASE_DIR.parent / 'shared'
-if SHARED_DIR.exists():
-    sys.path.insert(0, str(SHARED_DIR))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/

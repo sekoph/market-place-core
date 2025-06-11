@@ -17,10 +17,16 @@ import sys
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Add shared folder to Python path
-SHARED_DIR = BASE_DIR.parent / 'shared'
-if SHARED_DIR.exists():
-    sys.path.insert(0, str(SHARED_DIR))
+# # Add shared folder to Python path
+# SHARED_DIR = BASE_DIR.parent / 'shared'
+# if SHARED_DIR.exists():
+#     sys.path.insert(0, str(SHARED_DIR))
+
+
+# # Add the project root (market-core-place) to the path
+# sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'shared')))
+
 
 load_dotenv()
 # Quick-start development settings - unsuitable for production
