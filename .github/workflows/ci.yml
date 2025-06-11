@@ -86,6 +86,7 @@ jobs:
           DB_PASSWORD: ${{ matrix.service.DB_PASSWORD }}
           DB_PORT: ${{ matrix.service.DB_PORT }}
           DB_HOST: localhost
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
           PYTHONPATH: ${{ github.workspace }}
         run: |
           python manage.py migrate
@@ -98,6 +99,7 @@ jobs:
           DB_PASSWORD: ${{ matrix.service.DB_PASSWORD }}
           DB_PORT: ${{ matrix.service.DB_PORT }}
           DB_HOST: localhost
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
           PYTHONPATH: ${{ github.workspace }}
         run: |
           coverage run manage.py test
