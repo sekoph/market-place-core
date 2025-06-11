@@ -1,4 +1,4 @@
-name: market place core CI
+name: Market Place Core CI
 
 on:
   push:
@@ -8,30 +8,30 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+
     strategy:
       matrix:
         service:
-          - name : auth-service
+          - name: auth-service
             DB_NAME: auth
             DB_USER: admin
             DB_PASSWORD: password
             DB_PORT: 5433
 
-          - name : customer-service
+          - name: customer-service
             DB_NAME: customer
             DB_USER: admin
             DB_PASSWORD: password
             DB_PORT: 5434
 
-          - name : product-service
+          - name: product-service
             DB_NAME: product
             DB_USER: admin
             DB_PASSWORD: password
             DB_PORT: 5435
 
-          - name : order-service
+          - name: order-service
             DB_NAME: order
             DB_USER: admin
             DB_PASSWORD: password
@@ -40,64 +40,63 @@ jobs:
     services:
       postgres:
         image: postgres:latest
-        env:
-          POSTGRES_USER: ${{ matrix.service.DB_USER }}
-          POSTGRES_PASSWORD: ${{ matrix.service.DB_PASSWORD }}
-          POSTGRES_DB: ${{ matrix.service.DB_NAME }}
         ports:
-          ${{ matrix.service.DB_PORT }}:5432
+          - 5432:5432
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+        env:
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: placeholder_db  # This gets overridden in Django env
 
     steps:
-    - name: checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
+      - name: Install dependencies
+        working-directory: ./${{ matrix.service.name }}
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install coverage
 
-    - name: Install Dependencies
-      working-directory: ./${{ matrix.service.name}}
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-      
-    - name: run Tests
-      working-directory: ./${{ matrix.service.name}}
-      env:
-        DB_NAME: ${{ matrix.service.DB_NAME }}
-        DB_USER: ${{ matrix.service.DB_USER }}
-        DB_PASSWORD: ${{ matrix.service.DB_PASSWORD }}
-        DB_PORT: ${{ matrix.service.DB_PORT }}
-        DB_HOST: localhost
-      run: |
-        python manage.py migrate
-        python manage.py test
+      - name: Run migrations
+        working-directory: ./${{ matrix.service.name }}
+        env:
+          DB_NAME: ${{ matrix.service.DB_NAME }}
+          DB_USER: ${{ matrix.service.DB_USER }}
+          DB_PASSWORD: ${{ matrix.service.DB_PASSWORD }}
+          DB_PORT: ${{ matrix.service.DB_PORT }}
+          DB_HOST: localhost
+        run: |
+          python manage.py migrate
 
-    - name: run Tests with coverage
-      working-directory: ./${{ matrix.service.name}}
-      env:
-      DB_NAME: ${{ matrix.service.DB_NAME }}
-      DB_USER: ${{ matrix.service.DB_USER }}
-      DB_PASSWORD: ${{ matrix.service.DB_PASSWORD }}
-      DB_PORT: ${{ matrix.service.DB_PORT }}
-      DB_HOST: localhost
-      run: |
-        coverage run manage.py test
-        coverage report
-        coverage xml
+      - name: Run tests with coverage
+        working-directory: ./${{ matrix.service.name }}
+        env:
+          DB_NAME: ${{ matrix.service.DB_NAME }}
+          DB_USER: ${{ matrix.service.DB_USER }}
+          DB_PASSWORD: ${{ matrix.service.DB_PASSWORD }}
+          DB_PORT: ${{ matrix.service.DB_PORT }}
+          DB_HOST: localhost
+        run: |
+          coverage run manage.py test
+          coverage report
+          coverage xml
 
-    - name: Upload coverage test to codex
-      uses: codecov/codecov-action@v5
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        flags: ${{ matrix.service.name }}
-        working-directory: ./${{ matrix.service.name}}
-        file: ./coverage.xml
-        verbose: true
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: ${{ matrix.service.name }}
+          working-directory: ./${{ matrix.service.name }}
+          file: coverage.xml
+          verbose: true
