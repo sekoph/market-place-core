@@ -98,5 +98,5 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: ${{ matrix.service.name }}
           working-directory: ./${{ matrix.service.name }}
-          file: coverage.xml
+          files: coverage.xml
           verbose: true
